@@ -10,6 +10,7 @@ var puts = function (str, color) {
 
 var reporter = {
   started: function (allCases) {
+    this.startTime = (new Date).getMilliseconds();
     puts("Runnung " + allCases.length + " cases:", 'yellow');
   },
 
@@ -17,7 +18,17 @@ var reporter = {
     puts("\n* " + context.join(": ") + "\n", 'yellow');
   },
 
-  finished: function () {
+  finished: function (allCases) {
+    this.finishTime = (new Date).getMilliseconds();
+    var timeSpent = (this.finishTime - this.startTime) / 1000;
+    puts("\n");
+    puts("Finished in " + timeSpent + " seconds\n");
+    puts(
+      String(allCases.length) + " examples, " +
+      String(0) + " falures, " +
+      String(0) + " pendong",
+      'yellow'
+    );
     puts("\n");
   },
 

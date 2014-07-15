@@ -74,7 +74,7 @@ bdd.runAllCases = function (callback) {
       }
       runCase(allCases[current_i], runNext);
     } else {
-      bdd.reporter.finished();
+      bdd.reporter.finished(allCases);
       //puts("-- finish\n");
       callback && callback();
     }

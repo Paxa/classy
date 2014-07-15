@@ -16,7 +16,20 @@ process.on("uncaughtException", function(err) {
 global.Classy = require("../classy");
 
 /// Load tests
-require("./basics_test");
+
+var glob = require('glob');
+var testFiles = glob.sync(__dirname + "/*_test.js");
+
+if (process.argv.length > 2) {
+  var pattern = process.argv[2];
+  testFiles = testFiles.filter(function(file) {
+    return file.indexOf(pattern) != -1;
+  });
+}
+
+testFiles.forEach(function(fileName) {
+  require(fileName);
+});
 
 /// Run tests
 bdd.runAllCases(function() {
