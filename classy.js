@@ -33,6 +33,20 @@ var BaseKlass = function BaseClass () {};
 BaseKlass.KlassMethods = {
   inspect: function() {
     return "<::" + this.name + ">";
+  },
+
+  include: function include (module1, module2, module3) {
+    for (var i = 0; i < arguments.length; i++) {
+      Classy.extend(this.prototype, arguments[i]);
+    }
+  },
+
+  extend: function extend (module) {
+    Classy.extend(this, module);
+  },
+
+  classEval: function classEval (callback) {
+    callback.call(this.prototype, this.prototype, Classy);
   }
 };
 
@@ -57,6 +71,14 @@ var Inspector = {
     });
 
     return "<" + this.klassName + ":" + this.object_id + " " + ivars.join(", ") + ">";
+  },
+
+  isPrototype: function () {
+    return this instanceof BaseKlass && this.object_id === undefined;
+  },
+
+  isInstance: function () {
+    return !this.isPrototype();
   }
 };
 
@@ -110,7 +132,11 @@ var Classy = {
 
     Object.defineProperty(newClass.prototype, 'properties', {
       get: function() {
-        var properties = Object.getOwnPropertyNames(this).concat(Object.getOwnPropertyNames(newClass.prototype));
+        var properties = Object.getOwnPropertyNames(this);
+        Object.getOwnPropertyNames(newClass.prototype).forEach(function(key) {
+          if (properties.indexOf(key) == -1) properties.push(key);
+        });
+
         return properties.filter(function(key) {
           var prop = Object.getOwnPropertyDescriptor(this, key) || Object.getOwnPropertyDescriptor(this.klass.prototype, key);
           return !('value' in prop); // && ('get' in prop || 'set' in prop);
@@ -150,7 +176,8 @@ var Classy = {
     });
 
     Classy.extend(newClass, BaseKlass.KlassMethods);
-    newClass.extend(Inspector);
+    newClass.include(Inspector);
+    //newClass.extend(Inspector);
 
     callback && callback.call(newClass.prototype, newClass.prototype, Classy);
 
@@ -161,7 +188,7 @@ var Classy = {
   extend: function(target, module) {
     for (var prop in module) {
       //console.log('extend', prop, module[prop]);
-      target[prop] = module[prop];
+      if (module.hasOwnProperty(prop)) target[prop] = module[prop];
     }
   },
 
@@ -204,11 +231,77 @@ var Classy = {
   buildUpPrototype: function(name) {
     var newClass = eval("(function " + name + " () { assignObjectid(this); this.initialize.call(this, arguments); })");
     newClass.prototype = new BaseKlass;
+    newClass.isKlass = true;
     //console.log(newClass.toString());
     return newClass;
   }
 };
 
 Classy.BaseKlass = BaseKlass;
+
+// look see
+
+var colors = require('colors');
+
+var puts = function (str, color) {
+  if (color !== undefined) {
+    process.stdout.write(String(str)[color] + "\n");
+  } else {
+    process.stdout.write(String(str) + "\n");
+  }
+};
+
+function printDebug (object) {
+  // CLASS VARIABLES
+  puts("    variables:");
+  for (var key in object) {
+    if (typeof object[key] != 'function') {
+      puts("      " + key, 'green');
+    }
+  }
+
+  // CLASS METHODS (static)
+  puts("    methods:");
+  for (var key in object) {
+    if (typeof object[key] == 'function') {
+      puts("      " + key, 'green');
+    }
+  }
+
+  // CLASS PROPERTIES
+  puts("    properties:");
+  if (object.isKlass) {
+    var properties = Object.getOwnPropertyNames(object);
+    if (object.isKlass) {
+      properties = properties.concat(Object.getOwnPropertyNames(object.superclass));
+    }
+    properties.forEach(function(key) {
+      var prop = Object.getOwnPropertyDescriptor(object, key) || Object.getOwnPropertyDescriptor(object.klass.prototype, key);
+      if (prop && !('value' in prop)) {
+        puts("      " + key, 'green');
+      }
+    });
+  } else {
+    object.properties.forEach(function(key) {
+      puts("      " + key, 'green');
+    });
+  }
+}
+
+Classy.ls = function (object) {
+  if (object.isKlass) {
+    puts(JSON.stringify(object.name) + " is a class.", 'bold');
+    puts("  # class");
+    printDebug(object);
+
+    puts("  # instance");
+    printDebug(object.prototype);
+
+  } else if (object.isPrototype()) {
+    
+  } else if (object.isInstance()) {
+    
+  }
+};
 
 module.exports = Classy;

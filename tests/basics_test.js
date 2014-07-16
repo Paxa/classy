@@ -83,6 +83,7 @@ describe('Classy basics', function() {
   it('should have property #methods', function() {
     var Cat = Classy.build('Cat');
     var methods = (new Cat).methods;
+
     assert_contain(methods, 'inspect');
     assert_contain(methods, 'is_a');
     assert_contain(methods, 'tap');
@@ -92,6 +93,7 @@ describe('Classy basics', function() {
   it('should have property #properties', function() {
     var Cat = Classy.build('Cat');
     var properties = (new Cat).properties;
+
     assert_contain(properties, "object_id");
     assert_contain(properties, "instance_variable_names");
     assert_contain(properties, "instance_variables");

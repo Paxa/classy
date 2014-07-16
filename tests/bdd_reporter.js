@@ -55,6 +55,9 @@ var reporter = {
         puts(body[num] + "\n", 'red');
         puts(body[num + 1] + "\n", 'blue');
         puts(body[num + 2] + "\n", 'blue');
+        for(var li = 1; li <= 3; li++) {
+          puts(stack[li] + "\n");
+        }
       }
     }
     process.stdout.write("\n");
