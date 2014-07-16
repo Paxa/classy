@@ -42,7 +42,7 @@ describe('Classy basics', function() {
     assert((new Cat).is_a(Dog), false);
   });
 
-  it('should have method tap', function() {
+  it('should have method #tap', function() {
     var cat = new (Classy.build('Cat'));
     var returning = cat.tap(function() {
       assert(this, cat);
@@ -61,5 +61,43 @@ describe('Classy basics', function() {
     var Cat = Classy.build('Cat');
     var cat = new Cat;
     assert(cat.klassName, 'Cat');
+  });
+
+  it('should return parent class', function () {
+    var Cat = Classy.build('Cat');
+    assert(Cat.superclass, Classy.BaseKlass);
+  });
+
+  it('should allocate new object without running initialize', function() {
+    var Cat = Classy.build('Cat', function() {
+      this.initialized = false;
+      this.initialize = function () {
+        this.initialized = true;
+      }
+    });
+
+    assert((new Cat).initialized, true);
+    assert(Cat.allocate().initialized, false);
+  });
+
+  it('should have property #methods', function() {
+    var Cat = Classy.build('Cat');
+    var methods = (new Cat).methods;
+    assert_contain(methods, 'inspect');
+    assert_contain(methods, 'is_a');
+    assert_contain(methods, 'tap');
+    assert_contain(methods, 'tap');
+  });
+
+  it('should have property #properties', function() {
+    var Cat = Classy.build('Cat');
+    var properties = (new Cat).properties;
+    assert_contain(properties, "object_id");
+    assert_contain(properties, "instance_variable_names");
+    assert_contain(properties, "instance_variables");
+    assert_contain(properties, "methods");
+    assert_contain(properties, "properties");
+    assert_contain(properties, "klass");
+    assert_contain(properties, "klassName");
   });
 });

@@ -24,4 +24,10 @@ asserts.assert_match = function assert_match (string, regexp) {
   };
 };
 
+asserts.assert_contain = function assert_contain (array, element) {
+  if (array.indexOf(element) == -1) {
+    bdd.onError(new Error("'assert_contain' failed: expected '" + JSON.stringify(array) + "' to contain " + JSON.stringify(element)));
+  };
+};
+
 module.exports = asserts;

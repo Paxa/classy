@@ -6,6 +6,7 @@ global.describe = bdd.describe;
 global.assert = assets.assert;
 global.assert_true = assets.assert_true;
 global.assert_match = assets.assert_match;
+global.assert_contain = assets.assert_contain;
 
 process.on("uncaughtException", function(err) {
   bdd.onError(err);

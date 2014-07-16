@@ -28,7 +28,6 @@ var BaseKlass = function BaseClass () {};
 
   p.initialize = function() {};
 
-  p.klass = BaseKlass;
 }(BaseKlass.prototype);
 
 BaseKlass.KlassMethods = {
@@ -66,11 +65,15 @@ var Classy = {
     var newClass = this.buildUpPrototype(name);
 
     newClass.classEval = function(callback) {
-      callback.call(this, this.prototype);
+      callback.call(newClass, newClass.prototype);
     };
 
     newClass.extend = function (someModule) {
-      Classy.extend(this.prototype, someModule);
+      Classy.extend(newClass.prototype, someModule);
+    };
+
+    newClass.allocate = function () {
+      return Object.create(newClass.prototype);
     };
 
     Object.defineProperty(newClass.prototype, 'instance_variable_names', {
@@ -95,7 +98,27 @@ var Classy = {
       }
     });
 
-    Object.defineProperty(newClass, 'parentKlass', {
+    Object.defineProperty(newClass.prototype, 'methods', {
+      get: function () {
+        var methods = [];
+        for (var prop in this) {
+          if (typeof this[prop] == 'function') methods.push(prop);
+        }
+        return methods;
+      }
+    });
+
+    Object.defineProperty(newClass.prototype, 'properties', {
+      get: function() {
+        var properties = Object.getOwnPropertyNames(this).concat(Object.getOwnPropertyNames(newClass.prototype));
+        return properties.filter(function(key) {
+          var prop = Object.getOwnPropertyDescriptor(this, key) || Object.getOwnPropertyDescriptor(this.klass.prototype, key);
+          return !('value' in prop); // && ('get' in prop || 'set' in prop);
+        }.bind(this));
+      }
+    });
+
+    Object.defineProperty(newClass, 'superclass', {
       get: function() {
         return BaseKlass;
       }
@@ -104,7 +127,7 @@ var Classy = {
     // TODO show real ancesstors
     Object.defineProperty(newClass, 'ancesstors', {
       get: function() {
-        return [newClass.parentKlass].concat([newClass]);
+        return [newClass.superclass].concat([newClass]);
       }
     });
 
@@ -185,5 +208,7 @@ var Classy = {
     return newClass;
   }
 };
+
+Classy.BaseKlass = BaseKlass;
 
 module.exports = Classy;
