@@ -76,7 +76,7 @@ bdd.runAllCases = function (callback) {
     } else {
       bdd.reporter.finished(allCases);
       //puts("-- finish\n");
-      callback && callback();
+      callback && callback(bdd.reporter.failed == 0);
     }
   };
 

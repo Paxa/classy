@@ -9,7 +9,9 @@ var puts = function (str, color) {
 }
 
 var reporter = {
+  failed: 0,
   started: function (allCases) {
+    this.failed = 0;
     this.startTime = (new Date).getMilliseconds();
     puts("Runnung " + allCases.length + " cases:", 'yellow');
   },
@@ -23,12 +25,11 @@ var reporter = {
     var timeSpent = (this.finishTime - this.startTime) / 1000;
     puts("\n");
     puts("Finished in " + timeSpent + " seconds\n");
-    puts(
-      String(allCases.length) + " examples, " +
-      String(0) + " falures, " +
-      String(0) + " pendong",
-      'yellow'
-    );
+
+    puts(String(allCases.length) + " examples, ", 'yellow');
+    puts(String(this.failed) + " falures, ", this.failed > 0 ? 'red' : 'yellow');
+    puts(String(0) + " pending", 'yellow');
+
     puts("\n");
   },
 
@@ -61,7 +62,7 @@ var reporter = {
       }
     }
     process.stdout.write("\n");
-    process.exit(1);
+    this.failed += 1;
   },
 
   reportGood: function reportGood (it_case) {

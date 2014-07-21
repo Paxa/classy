@@ -4,6 +4,7 @@ var renameFunction = function (name, fn) {
 };
 
 var lastObjectId = 0;
+var classyRegistry = {};
 
 function assignObjectid(newObject) {
   !function (objId) {
@@ -64,9 +65,7 @@ var Inspector = {
 
     // if it's an instance
     var ivars = [], _this = this;
-    //console.dir(this);
     this.instance_variable_names.forEach(function(key) {
-      //console.log(key, JSON.stringify(_this[key]));
       ivars.push("" + key + "=" + JSON.stringify(_this[key]));
     });
 
@@ -85,7 +84,7 @@ var Inspector = {
 var Classy = {
   build: function (name, callback) {
     var newClass = this.buildUpPrototype(name);
-
+    classyRegistry[name] = newClass;
     newClass.classEval = function(callback) {
       callback.call(newClass, newClass.prototype);
     };
@@ -95,7 +94,9 @@ var Classy = {
     };
 
     newClass.allocate = function () {
-      return Object.create(newClass.prototype);
+      newObject = Object.create(newClass.prototype);
+      assignObjectid(newObject);
+      return newObject;
     };
 
     Object.defineProperty(newClass.prototype, 'instance_variable_names', {
@@ -190,6 +191,7 @@ var Classy = {
       //console.log('extend', prop, module[prop]);
       if (module.hasOwnProperty(prop)) target[prop] = module[prop];
     }
+    return target;
   },
 
   // extend class (prototype)
@@ -229,12 +231,16 @@ var Classy = {
   },
 
   buildUpPrototype: function(name) {
-    var newClass = eval("(function " + name + " () { assignObjectid(this); this.initialize.call(this, arguments); })");
+    var newClass = eval("(function " + name + " () { assignObjectid(this); this.initialize.apply(this, arguments); })");
     newClass.prototype = new BaseKlass;
     newClass.isKlass = true;
     //console.log(newClass.toString());
     return newClass;
-  }
+  },
+
+  constantize: function (name) {
+    return classyRegistry[name];
+  },
 };
 
 Classy.BaseKlass = BaseKlass;
@@ -303,5 +309,7 @@ Classy.ls = function (object) {
     
   }
 };
+
+Classy.new = Classy.build;
 
 module.exports = Classy;

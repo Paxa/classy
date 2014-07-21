@@ -77,7 +77,9 @@ describe('Classy basics', function() {
     });
 
     assert((new Cat).initialized, true);
-    assert(Cat.allocate().initialized, false);
+    var allocated = Cat.allocate();
+    assert(allocated.initialized, false);
+    assert_true(!!allocated.object_id);
   });
 
   it('should have property #methods', function() {

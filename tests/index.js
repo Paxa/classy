@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 global.bdd = require('./bdd');
 var assets = require('./bdd_assert');
 
@@ -33,6 +35,6 @@ testFiles.forEach(function(fileName) {
 });
 
 /// Run tests
-bdd.runAllCases(function() {
-  process.exit(0);
+bdd.runAllCases(function(isSuccess) {
+  process.exit(isSuccess ? 0 : 1);
 });
