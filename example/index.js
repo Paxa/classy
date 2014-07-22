@@ -2,6 +2,32 @@
 
 var Classy = require("../classy");
 
+global.Fiber = require('fibers');
+
+Object.prototype.wrapSync = function(methodName) {
+  var _this = this;
+
+  return function () {
+    var fiber = Fiber.current;
+    var newValue;
+    var args = Array.prototype.slice.call(arguments);
+    args.push(function(data) {
+      newValue = data;
+      fiber.run();
+    });
+
+    if (typeof methodName == 'string') {
+      _this[methodName].apply(_this, args);
+    } else if (typeof methodName == 'function') {
+      methodName.apply(_this, args);
+    }
+
+    Fiber.yield();
+    return newValue;
+  };
+};
+
+
 var Datastore = require('nedb');
 var db = new Datastore();
 
@@ -13,7 +39,7 @@ var ClassPersistance = {
 
   findById: function (id, callback) {
     db.findOne({ _id: id }, function (err, doc) {
-      callback(this.initFromDbRow(doc));
+      callback(doc && this.initFromDbRow(doc));
     }.bind(this));
   },
 
@@ -83,7 +109,7 @@ var InstancePersistence = {
         this.persisted = true;
         this.id = newDoc._id;
       }
-      callback && callback.call(this, this);
+      callback && callback(this);
     }.bind(this));
   },
 
@@ -100,10 +126,12 @@ var InstancePersistence = {
 
   assignAttributes: function (attrs) {
     for (var key in attrs) {
-      if (this.attributeNames.indexOf(key) == -1) {
-        throw new Error("Unknown attribute " + key);
+      if (attrs.hasOwnProperty(key)) {
+        if (this.attributeNames.indexOf(key) == -1) {
+          throw new Error("Unknown attribute " + key);
+        }
+        this[key] = attrs[key];
       }
-      this[key] = attrs[key];
     }
   },
 
@@ -119,6 +147,21 @@ var InstancePersistence = {
   }
 };
 
+var syncMutator = function (object, method) {
+  var fn = object[method];
+  object['_origin_async_' + method] = fn;
+  var wrapped = object.wrapSync(fn);
+
+  object[method] = function () {
+    if (Fiber.current) {
+      return wrapped.apply(object, arguments);
+    } else {
+      return fn.apply(object, arguments);
+    }
+  };
+};
+
+
 var Vehicle = Classy.new('Vehicle', function (p, mod) {
   this.klass.extend(  ClassPersistance);
   this.klass.include( InstancePersistence);
@@ -130,16 +173,23 @@ var Vehicle = Classy.new('Vehicle', function (p, mod) {
   ]);
 });
 
-var car = new Vehicle({name: "car", year: 1998});
+syncMutator(Vehicle.prototype, 'save');
+syncMutator(Vehicle, 'findById');
+syncMutator(Vehicle, 'findAll');
 
-car.save(function() {
+Fiber(function () {
+  var car = new Vehicle({name: "car", year: 1998});
+
+  car.save();
   console.log('saved');
-  Vehicle.findById(car.id, function(car2) {
-    console.log(car2);
-    Vehicle.findAll(function(cars) {
-      console.log(cars);
-    });
-  });
-});
+
+  var car2 = Vehicle.findById(car.id);
+  console.log(car2);
+
+  var cars = Vehicle.findAll();
+  console.log(cars);
+
+}).run();
+
 
 //Classy.ls(Vehicle);
