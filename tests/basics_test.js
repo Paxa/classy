@@ -89,7 +89,19 @@ describe('Classy basics', function() {
     assert_contain(methods, 'inspect');
     assert_contain(methods, 'is_a');
     assert_contain(methods, 'tap');
-    assert_contain(methods, 'tap');
+    assert_contain(methods, 'initialize');
+  });
+
+  it('should be inherited', function() {
+    var Cat = Classy.build('Cat');
+    var aCat = new Cat;
+    assert_true(aCat instanceof Cat);
+    assert(aCat.constructor, Cat);
+
+    var Rabbit = Classy.build('Rabbit');
+    var aRabbit = new Rabbit;
+    assert_true(aRabbit instanceof Rabbit);
+    assert(aRabbit.constructor, Rabbit);
   });
 
   it('should have property #properties', function() {
