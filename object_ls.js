@@ -10,10 +10,6 @@ var puts = function (str, color) {
   }
 };
 
-var diff = function (array1, array2) {
-  return array1.filter(function(i) {return array2.indexOf(i) < 0; });
-};
-
 
 Object.ls = function Object_ls (object) {
   puts('-> instance of ' + String(object.constructor.name).bold);
@@ -25,7 +21,7 @@ Object.ls = function Object_ls (object) {
 
   puts("  properties:");
   Object.properties(object).forEach(function(key) {
-    puts("  * " + key, 'green');
+    puts("  @ " + key, 'cyan');
   });
 
   puts("  own methods:");
@@ -34,45 +30,44 @@ Object.ls = function Object_ls (object) {
   });
 
   puts("  inherited:");
-  var proto = object.parentClass || object.constructor.prototype;
+
+  var proto = Object.getPrototypeOf(object);
 
   while (proto) {
-    puts('-> from ' + String(proto.parentClassName).bold);
+    puts('  -> from ' + String(proto.constructor ? proto.constructor.name : proto.name).bold);
     Object.own_methods(proto).forEach(function(key) {
-      puts("  * " + key, 'green');
+      puts("    * " + key, 'green');
     });
-
-    if (proto.parentClass && proto != proto.parentClass) {
-      proto = proto.parentClass;
-    } else if (proto.constructor && proto.constructor.prototype === proto) {
-      proto = false;
-    } else {
-      proto = proto.constructor && proto.constructor.prototype;
-    }
+    Object.properties(proto).forEach(function(key) {
+      puts("    @ " + key, 'cyan');
+    });
+    proto = Object.getPrototypeOf(proto);
   }
-  /*
-  diff(Object.methods(object), Object.own_methods(object)).forEach(function(key) {
-    puts("  * " + key, 'green');
-  });
-  */
 };
 
-function inheritFrom(fn1, obj) {
-  fn1.prototype = obj;
-  fn1.prototype.constructor = fn1;
-  Object.defineProperty(fn1.prototype, 'parentClass', {
-    get: function() {
-      return obj;
-    }
-  });
+//var inherits = require('util').inherits;
 
-  var className = fn1.name;
-  Object.defineProperty(fn1.prototype, 'parentClassName', {
-    get: function() {
-      return className;
-    }
-  });
-}
+var inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  if (typeof superCtor == 'function') {
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  } else {
+    ctor.prototype = superCtor;
+    Object.defineProperty(ctor.prototype, 'constructor', {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    });
+  }
+};
 
 var domain = require('domain');
 
@@ -80,9 +75,7 @@ var Product = function Product () {
   
 }
 
-inheritFrom(Product, new domain.Domain);
-//Product.prototype = ;
-//Product.prototype.constructor = Product;
+inherits(Product, new domain.Domain);
 
 Product.prototype.code = "SKU-1";
 Product.prototype.label = "Mouse";
@@ -97,11 +90,8 @@ var SubProduct = function SubProduct () {
   
 };
 
-inheritFrom(SubProduct, p);
-//SubProduct.prototype = p;
+inherits(SubProduct, p);
+
 SubProduct.prototype.isSubProduct = function () { };
 
-//console.log((new SubProduct).__proto__);
-
-console.log((new SubProduct).parentClass);
 Object.ls(new SubProduct);

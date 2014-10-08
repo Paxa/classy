@@ -34,12 +34,23 @@ Object.properties = function Object_properties (object) {
   var filtered = [];
   properties.forEach(function(key) {
     var prop = Object.getOwnPropertyDescriptor(object, key) || Object.getOwnPropertyDescriptor(proto, key);
-    if (!('value' in prop)) filtered.push(key);
+    if (!('value' in prop) || !prop.enumerable) filtered.push(key);
   });
 
   return filtered;
 };
 
+Object.allProperties = function(object) {
+  var props = [];
+
+  do {
+    Object.getOwnPropertyNames(object).forEach(function (prop) {
+      if (props.indexOf(prop) === -1) props.push(prop);
+    });
+  } while (object = Object.getPrototypeOf(object));
+
+  return props;
+};
 
 Object.instance_variables = function Object_instance_variables (object) {
   var ivars = {};
