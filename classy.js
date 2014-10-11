@@ -1,4 +1,4 @@
-require('./object_extras');
+require('./object_extras').extendGlobal();
 
 var renameFunction = function (name, fn) {
     return (new Function("return function (call) { return function " + name +
@@ -18,48 +18,9 @@ function assignObjectid(newObject) {
   }(lastObjectId += 1);
 }
 
-var BaseKlass = function BaseClass () {};
-!function(p) {
-  p.is_a = function(klass) {
-    return this.klass == klass;
-  };
-
-  p.tap = function (callback) {
-    callback.call(this, this);
-    return this;
-  };
-
-  p.initialize = function() {};
-
-}(BaseKlass.prototype);
-
-BaseKlass.KlassMethods = {
-  inspect: function() {
-    return "<::" + this.name + ">";
-  },
-
-  include: function include (module1, module2, module3) {
-    for (var i = 0; i < arguments.length; i++) {
-      Classy.extend(this.prototype, arguments[i]);
-    }
-  },
-
-  extend: function extend (module) {
-    Classy.extend(this, module);
-  },
-
-  classEval: function classEval (callback) {
-    callback.call(this.prototype, this.prototype, Classy);
-  }
-};
-
-BaseKlass.inspect = function() {
-  return "<::" + BaseKlass.name + ">";
-};
-
-require('./object_inspector')(BaseKlass);
-
 var Classy = {
+  mutatorMethod: '_Mutator',
+
   build: function (name, callback) {
     var newClass = this.buildUpPrototype(name);
     classyRegistry[name] = newClass;
@@ -77,46 +38,15 @@ var Classy = {
       return newObject;
     };
 
-    Object.defineProperty(newClass.prototype, 'instance_variable_names', {
-      get: function() {
-        return Object.instance_variable_names(this);
-      }
-    });
-
-    Object.defineProperty(newClass.prototype, 'instance_variables', {
-      get: function() {
-        return Object.instance_variables(this);
-      }
-    });
-
-    Object.defineProperty(newClass.prototype, 'methods', {
-      get: function () {
-        return Object.methods(this);
-      }
-    });
-
-    Object.defineProperty(newClass.prototype, 'properties', {
-      get: function() {
-        return Object.properties(this);
-      }
-    });
-
     Object.defineProperty(newClass, 'superclass', {
       get: function() {
         return BaseKlass;
       }
     });
 
-    // TODO show real ancesstors
     Object.defineProperty(newClass, 'ancesstors', {
       get: function() {
-        return [newClass.superclass].concat([newClass]);
-      }
-    });
-
-    Object.defineProperty(newClass.prototype, 'klass', {
-      get: function() {
-        return newClass;
+        return Object.ancesstors(this);
       }
     });
 
@@ -126,17 +56,20 @@ var Classy = {
       }
     });
 
-    Object.defineProperty(newClass.prototype, 'klassName', {
-      get: function() {
-        return newClass.name;
-      }
-    });
-
-    Classy.extend(newClass, BaseKlass.KlassMethods);
-    newClass.include(ObjectInspector);
+    Classy.extend(newClass, Classy.BaseKlass.KlassMethods);
     //newClass.extend(Inspector);
 
-    callback && callback.call(newClass.prototype, newClass.prototype, Classy);
+    if (callback) {
+      if (typeof callback == 'function') {
+        callback.call(newClass.prototype, newClass.prototype, Classy);
+      }
+      if (typeof callback == 'object') {
+        newClass.include(callback);
+        if (typeof callback[this.mutatorMethod] == 'function') {
+          callback[this.mutatorMethod].call(newClass.prototype, newClass.prototype, Classy);
+        }
+      };
+    }
 
     return newClass;
   },
@@ -145,7 +78,9 @@ var Classy = {
   extend: function(target, module) {
     for (var prop in module) {
       //console.log('extend', prop, module[prop]);
-      if (module.hasOwnProperty(prop)) target[prop] = module[prop];
+      if (module.hasOwnProperty(prop) && prop != this.mutatorMethod) {
+        target[prop] = module[prop];
+      }
     }
     return target;
   },
@@ -186,12 +121,26 @@ var Classy = {
     });
   },
 
+  // copy of node.utils.inherits
+  inherits: function(ctor, superCtor) {
+    ctor.super_ = superCtor;
+    if (typeof superCtor == 'function') {
+      ctor.prototype = Object.create(superCtor.prototype);
+    } else {
+      ctor.prototype = superCtor;
+    }
+    Object.defineProperty(ctor.prototype, 'constructor', {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    });
+  },
+
   buildUpPrototype: function(name) {
     var newClass = eval("(function " + name + " () { assignObjectid(this); this.initialize.apply(this, arguments); })");
-    newClass.prototype = new BaseKlass;
+    this.inherits(newClass, this.BaseKlass);
     newClass.isKlass = true;
-    newClass.prototype.constructor = newClass;
-    //console.log(newClass.toString());
     return newClass;
   },
 
@@ -200,10 +149,13 @@ var Classy = {
   },
 };
 
-Classy.BaseKlass = BaseKlass;
+Classy.BaseKlass = require('./classy_baseklass')(Classy);
+Classy.Inspector = require('./classy_inspector')(Classy);
 
-require('./classy_ls')(Classy);
+Classy.BaseKlass.include(Classy.Inspector);
 
-Classy.new = Classy.build;
+//require('./classy_ls')(Classy);
+
+Classy['new'] = Classy.build;
 
 module.exports = Classy;

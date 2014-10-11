@@ -1,4 +1,4 @@
-require('./object_extras');
+var ObjectKit = require('./object_extras');
 
 var colors = require('colors');
 
@@ -15,17 +15,17 @@ Object.ls = function Object_ls (object) {
   puts('-> instance of ' + String(object.constructor.name).bold);
 
   puts("  variables:");
-  Object.instance_variable_names(object).forEach(function(key) {
+  ObjectKit.instance_variable_names(object).forEach(function(key) {
     puts("  * " + key, 'green');
   });
 
   puts("  properties:");
-  Object.properties(object).forEach(function(key) {
+  ObjectKit.properties(object).forEach(function(key) {
     puts("  @ " + key, 'cyan');
   });
 
   puts("  own methods:");
-  Object.own_methods(object).forEach(function(key) {
+  ObjectKit.own_methods(object).forEach(function(key) {
     puts("  * " + key, 'green');
   });
 
@@ -35,10 +35,10 @@ Object.ls = function Object_ls (object) {
 
   while (proto) {
     puts('  -> from ' + String(proto.constructor ? proto.constructor.name : proto.name).bold);
-    Object.own_methods(proto).forEach(function(key) {
+    ObjectKit.own_methods(proto).forEach(function(key) {
       puts("    * " + key, 'green');
     });
-    Object.properties(proto).forEach(function(key) {
+    ObjectKit.properties(proto).forEach(function(key) {
       puts("    @ " + key, 'cyan');
     });
     proto = Object.getPrototypeOf(proto);
@@ -69,6 +69,7 @@ var inherits = function(ctor, superCtor) {
   }
 };
 
+/*
 var domain = require('domain');
 
 var Product = function Product () {
@@ -95,3 +96,4 @@ inherits(SubProduct, p);
 SubProduct.prototype.isSubProduct = function () { };
 
 Object.ls(new SubProduct);
+*/

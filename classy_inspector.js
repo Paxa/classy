@@ -1,9 +1,14 @@
-module.exports = function (BaseKlass) {
+module.exports = function (Classy) {
   // there is a bug if include it to BaseKlass
+
+  var isPrototype = function isPrototype (obj) {
+    return obj instanceof Classy.BaseKlass && obj.object_id === undefined;
+  };
+
   var Inspector = {
     inspect: function () {
       // if it's a prototype
-      if (this instanceof BaseKlass && this.object_id === undefined) {
+      if (isPrototype(this)) {
         return "<" + this.klassName + "::Constructor>";
       }
 
@@ -16,6 +21,7 @@ module.exports = function (BaseKlass) {
       return "<" + this.klassName + ":" + this.object_id + " " + ivars.join(", ") + ">";
     },
 
+    /*
     isPrototype: function () {
       return this instanceof BaseKlass && this.object_id === undefined;
     },
@@ -23,7 +29,8 @@ module.exports = function (BaseKlass) {
     isInstance: function () {
       return !this.isPrototype();
     }
+    */
   };
 
-  global.ObjectInspector = Inspector;
+  return Inspector;
 }
