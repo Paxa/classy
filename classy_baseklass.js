@@ -6,6 +6,14 @@ module.exports = function (Classy) {
       return this.klass == klass;
     };
 
+    proto.kind_of = function(klass) {
+      return Object.ancesstors(this).indexOf(klass) >= 0;
+    };
+
+    proto.respond_to = function(methodName) {
+      return typeof this[methodName] == 'function';
+    };
+
     proto.tap = function (callback) {
       callback.call(this, this);
       return this;
@@ -39,7 +47,7 @@ module.exports = function (Classy) {
 
     Object.defineProperty(proto, 'klass', {
       get: function() {
-        return Object.getPrototypeOf(this);
+        return Object.getPrototypeOf(this).constructor;
       }
     });
 

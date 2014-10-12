@@ -14,16 +14,20 @@ var puts = function (str, options) {
 };
 
 process.on("uncaughtException", function(err) {
+  var headers = [];
+
   var lines = err.stack.split("\n").map(function(line) {
     var m = line.match(/^\s+at (.*) \((.+):(\d+):(\d+)\)$/);
+    if (!m) headers.push(line);
     return m && { funcName: m[1], file: m[2], line: m[3], column: m[4] };
   });
 
-  lines = lines.filter(function (el) { return !!el });
+  lines = lines.filter(function (el) { return !!el; });
 
-  var message = err.stack.split("\n")[0];
+  //var message = err.stack.split("\n")[0];
+  var message = 'message' in err ? err.message : headers.join("\n");
 
-  puts(message);
+  puts(err.name + ": " + message);
 
   lines.forEach(function(line) {
     puts("        from %file:%line:in %funcName", line);

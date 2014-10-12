@@ -5,13 +5,29 @@ require('./object_ls');
 
 var Cat = Classy.build('Cat', {
   initialized: false,
+  time: new Date(),
+  nullProperty: null,
+  undProperty: undefined,
+
+  initialize: function() {
+    this.child = new Cat.Kitten();
+    this.family = {
+      older: this.child,
+      younger: new Cat.Kitten(),
+      totalCount: 2
+    };
+  },
+
   doSomething: function() {
     
   }
 });
 
+Cat.Kitten = Classy.build('Kitten', function () {
+  //this.klass.include(Cat);
+});
 
-Object.ls(new Cat());
+Object.ls(new Cat);
 
 process.exit();
 

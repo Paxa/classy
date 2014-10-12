@@ -1,7 +1,7 @@
 var ObjectKit = {};
 
 var isPrototype = function isPrototype (obj) {
-  return typeof obj && Object.keys(obj.prototype).length > 0;
+  return typeof obj == 'function' && Object.keys(obj.prototype).length > 0;
 };
 
 ObjectKit.forEach = function Object_forEach (object, callback) {
@@ -83,7 +83,9 @@ ObjectKit.instance_variable_names = function Object_instance_variable_names (obj
     if (typeof object[i] != 'function' || isPrototype(object[i])) keys.push(i);
   }
   return keys;
-}
+};
+
+ObjectKit.isPrototype = isPrototype;
 
 ObjectKit.extendGlobal = function () {
   ObjectKit.forEach(ObjectKit, function (key, value) {

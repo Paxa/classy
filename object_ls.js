@@ -10,13 +10,53 @@ var puts = function (str, color) {
   }
 };
 
+// standart + array, null, class, date, regexp
+// standarts are: undefined, object, boolean, number, string, function
+var realType = function (object) {
+  if (object instanceof Date)        return 'date';
+  if (object instanceof RegExp)      return 'regexp';
+  if (ObjectKit.isPrototype(object)) return 'class';
+  if (Array.isArray(object))         return 'array';
+  if (object === null)               return 'null';
+
+  return typeof object;
+};
+
+var debugValue = function debugValue (object) {
+  var type = realType(object);
+
+  switch (type) {
+    case 'null':      return "null";
+    case 'class':     return object.inspect ? object.inspect() : object.name;
+    case 'date':      return object.toString();
+    case 'regexp':    return object.toString();
+    case 'undefined': return "undefined";
+    case 'boolean':   return object.toString();
+    case 'number':    return object.toString();
+    case 'string':    return object.toString();
+    case 'function':  return "function '" + object.name + "'";
+    case 'array':     return JSON.stringify(object);
+    case 'object':
+      if (typeof object.inspect == 'function') return object.inspect();
+      var values = [];
+      ObjectKit.forEach(object, function(obj_k, obj_v) {
+        values.push( obj_k.toString() + ": " + debugValue(obj_v) );
+      });
+      return '{' + values.join(', ') + '}';
+      break;
+    default:          return object.toString();
+  }
+
+  return object.toString();
+};
 
 Object.ls = function Object_ls (object) {
   puts('-> instance of ' + String(object.constructor.name).bold);
 
   puts("  variables:");
   ObjectKit.instance_variable_names(object).forEach(function(key) {
-    puts("  * " + key, 'green');
+    var value = debugValue(object[key]);
+    puts("  * " + key + " = " + value, 'green');
   });
 
   puts("  properties:");
