@@ -11,6 +11,13 @@ ObjectKit.forEach = function Object_forEach (object, callback) {
 };
 
 
+ObjectKit.values = function Object_values (object) {
+  var values = [];
+  Object.forEach(object, function(key, value) { values.push(value); });
+  return values;
+};
+
+
 ObjectKit.methods = function Object_methods (object) {
   var methods = [];
   for (var prop in object) {
