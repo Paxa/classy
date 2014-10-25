@@ -5,11 +5,21 @@ module.exports = function (Classy) {
     return obj instanceof Classy.BaseKlass && obj.object_id === undefined;
   };
 
+  var isConstructor = function isConstructor (obj) {
+    return typeof obj == 'function' && obj.isKlass === true;
+  };
+
   var Inspector = {
     inspect: function () {
+
+      // if it's a class
+      if (isConstructor(this)) {
+        return "<" + this.name + "::Constructor>";
+      }
+
       // if it's a prototype
       if (isPrototype(this)) {
-        return "<" + this.klassName + "::Constructor>";
+        return "<" + this.constructor.name + "::Prototype>";
       }
 
       // if it's an instance

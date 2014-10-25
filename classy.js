@@ -40,7 +40,7 @@ var Classy = {
 
     Object.defineProperty(newClass, 'superclass', {
       get: function() {
-        return BaseKlass;
+        return Classy.BaseKlass;
       }
     });
 
@@ -52,7 +52,7 @@ var Classy = {
 
     Object.defineProperty(newClass, 'klass', {
       get: function() {
-        return BaseKlass;
+        return Object.getPrototypeOf(this).constructor; // Classy.BaseKlass;
       }
     });
 

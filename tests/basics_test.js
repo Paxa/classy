@@ -63,6 +63,10 @@ describe('Classy basics', function() {
     assert(cat.klassName, 'Cat');
   });
 
+  /*
+  // deprecated
+  // better use Object.getPrototypeOf(obj).constructor
+  */
   it('should return parent class', function () {
     var Cat = Classy.build('Cat');
     assert(Cat.superclass, Classy.BaseKlass);

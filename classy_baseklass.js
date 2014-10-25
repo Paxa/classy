@@ -41,7 +41,7 @@ module.exports = function (Classy) {
 
     Object.defineProperty(proto, 'properties', {
       get: function() {
-        return Object.properties(this);
+        return Object.allProperties(this);
       }
     });
 
