@@ -10,20 +10,8 @@ var puts = function (str, color) {
   }
 };
 
-// standart + array, null, class, date, regexp
-// standarts are: undefined, object, boolean, number, string, function
-var realType = function (object) {
-  if (object instanceof Date)        return 'date';
-  if (object instanceof RegExp)      return 'regexp';
-  if (ObjectKit.isPrototype(object)) return 'class';
-  if (Array.isArray(object))         return 'array';
-  if (object === null)               return 'null';
-
-  return typeof object;
-};
-
 var debugValue = function debugValue (object) {
-  var type = realType(object);
+  var type = ObjectKit.realType(object);
 
   switch (type) {
     case 'null':      return "null";

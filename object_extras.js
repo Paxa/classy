@@ -18,6 +18,21 @@ ObjectKit.values = function Object_values (object) {
 };
 
 
+// standart types + array, null, class, date, regexp
+// standarts are: undefined, object, boolean, number, string, function
+ObjectKit.realType = function Object_realType (object) {
+  if (typeof object == 'object') {
+    if (object instanceof Date)        return 'date';
+    if (object instanceof RegExp)      return 'regexp';
+    if (ObjectKit.isPrototype(object)) return 'class';
+    if (Array.isArray(object))         return 'array';
+    if (object === null)               return 'null';
+  }
+
+  return typeof object;
+};
+
+
 ObjectKit.methods = function Object_methods (object) {
   var methods = [];
   for (var prop in object) {
@@ -98,6 +113,6 @@ ObjectKit.extendGlobal = function () {
   ObjectKit.forEach(ObjectKit, function (key, value) {
     if (key != 'extendGlobal') Object[key] = value;
   });
-}
+};
 
 module.exports = ObjectKit;
