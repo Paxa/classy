@@ -2,8 +2,14 @@ var reporter = require('./bdd_reporter');
 
 var allCases = [];
 
+var currentCase;
+var currentFile;
+var currentContextStartLine;
+
 var bdd = {
   reporter: reporter,
+  stopTest: /stop-case/,
+
   onError: function (exception) {
     if (!currentCase) throw exception;
     bdd.reporter.reportError(currentCase, exception);
@@ -17,10 +23,9 @@ var asyncRun = function (fn) {
   return fn.toString().match(/^function\s*([\w\d_]+)?\s*\(([\w\d_]+)\)\s*{/)
 };
 
-var currentCase;
-
 var runCase = function (it_case, callback) {
   currentCase = it_case;
+
   if (asyncRun(it_case.runner)) {
     !function () {
 
@@ -50,9 +55,11 @@ var runCase = function (it_case, callback) {
     try {
       it_case.runner();
       bdd.reporter.reportGood(it_case);
-    } catch (e) {
+    } catch (error) {
       it_case.status = 'failed';
-      bdd.reporter.reportError(it_case, e);
+      if (error !== bdd.stopTest) {
+        bdd.reporter.reportError(it_case, error);
+      }
     }
     callback();
   }
@@ -84,6 +91,13 @@ bdd.runAllCases = function (callback) {
 };
 
 bdd.describe = function describe (context, callback) {
+  var err = new Error();
+  var stack = err.stack.split("\n");
+  var lineParts = stack[2].match(/\(([^:]+):(\d+).+\)/)
+  currentFile = lineParts[1];
+  currentContextStartLine = parseInt(lineParts[2], 10);
+  //console.log(currentFile);
+
   bdd.current_context = [context];
   bdd.current_context_fn = callback;
   //console.log(callback.toString());
@@ -93,9 +107,15 @@ bdd.describe = function describe (context, callback) {
 };
 
 bdd.it = function it (name, runner) {
+  var err = new Error();
+  var stack = err.stack.split("\n");
+  var line = stack[2].match(/:(\d+):\d+\)$/)[1];
+
   var it_case = {
     context: bdd.current_context.slice(0),
     context_fn: bdd.current_context_fn,
+    currentFile: currentFile,
+    currentLine: currentContextStartLine + parseInt(line, 10) - 1,
     name: name,
     runner: runner,
     status: 'defined', // status = defined, running, pass, failed

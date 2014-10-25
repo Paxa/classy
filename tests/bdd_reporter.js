@@ -34,9 +34,11 @@ var reporter = {
   },
 
   reportError: function reportError (it_case, err) {
-    if (typeof err == "string") {
+
+    if (typeof err == "string" || typeof err == "undefined") {
       err = new Error(err);
     }
+
     puts('.'.red);
     puts("\n---\n  \"" + it_case.name + "\" failed!\n", 'red');
     puts("  " + err + "\n", 'red');
@@ -56,7 +58,10 @@ var reporter = {
         puts(body[num] + "\n", 'red');
         puts(body[num + 1] + "\n", 'blue');
         puts(body[num + 2] + "\n", 'blue');
-        for(var li = 1; li <= 3; li++) {
+
+        puts("in file: " + it_case.currentFile + ":" + it_case.currentLine + "\n");
+
+        for (var li = 1; li <= 3; li++) {
           puts(stack[li] + "\n");
         }
       }
