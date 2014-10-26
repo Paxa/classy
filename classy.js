@@ -44,9 +44,9 @@ var Classy = {
       }
     });
 
-    Object.defineProperty(newClass, 'ancesstors', {
+    Object.defineProperty(newClass, 'ancestors', {
       get: function() {
-        return Object.ancesstors(this);
+        return Object.ancestors(this);
       }
     });
 

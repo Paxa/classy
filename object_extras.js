@@ -52,7 +52,12 @@ ObjectKit.own_methods = function Object_own_methods (object) {
 
 
 ObjectKit.properties = function Object_properties (object) {
-  var properties = Object.getOwnPropertyNames(object);
+  var properties;
+  if (typeof object == 'object') {
+    properties = Object.getOwnPropertyNames(object);
+  } else {
+    properties = Object.getOwnPropertyNames(Object.getPrototypeOf(object));
+  }
   var proto = object.constructor.prototype;
 
   Object.getOwnPropertyNames(proto).forEach(function(key) {
@@ -88,7 +93,15 @@ ObjectKit.instance_variables = function Object_instance_variables (object) {
   return ivars;
 };
 
-ObjectKit.ancesstors = function Object_ancesstors (object) {
+ObjectKit.instance_variable_names = function Object_instance_variable_names (object) {
+  var keys = [];
+  for (var i in object) {
+    if (typeof object[i] != 'function' || isPrototype(object[i])) keys.push(i);
+  }
+  return keys;
+};
+
+ObjectKit.ancestors = function Object_ancestors (object) {
   var lsat = object;
   prototypes = [];
 
@@ -99,15 +112,8 @@ ObjectKit.ancesstors = function Object_ancesstors (object) {
   return prototypes;
 };
 
-ObjectKit.instance_variable_names = function Object_instance_variable_names (object) {
-  var keys = [];
-  for (var i in object) {
-    if (typeof object[i] != 'function' || isPrototype(object[i])) keys.push(i);
-  }
-  return keys;
-};
-
 ObjectKit.isPrototype = isPrototype;
+ObjectKit.isConstructor = ObjectKit.isPrototype;
 
 ObjectKit.extendGlobal = function () {
   ObjectKit.forEach(ObjectKit, function (key, value) {

@@ -1,9 +1,9 @@
 {
   "name": "classy",
   "description": "Class system library",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
-    "url": "https://bitbucket.org/paxa/classy"
+    "url": "https://github.com/paxa/classy"
   },
   "main": "classy.js",
   "scripts": {

@@ -7,7 +7,7 @@ module.exports = function (Classy) {
     };
 
     proto.kind_of = function(klass) {
-      return Object.ancesstors(this).indexOf(klass) >= 0;
+      return Object.ancestors(this).indexOf(klass) >= 0;
     };
 
     proto.respond_to = function(methodName) {
