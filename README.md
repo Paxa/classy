@@ -2,6 +2,62 @@
 
 # Classy #
 
+## `'classy/object_extras'`
+
+Utility functions to have a better touch with objects:
+
+```js
+var ObjectKit = require('classy/object_extras');
+ObjectKit.extendGlobal();
+
+```
+
+**`extendGlobal`**
+
+extend global variable `Object`
+
+```js
+ObjectKit.extendGlobal();
+```
+
+```js
+// iterates object
+Object.forEach(obj, function (key, value) {
+
+});
+
+// get values as array
+var obj = {type: 'animal', wear: 'wool', lives: 9};
+Object.values(obj) // => ['animal', 'wool', 9];
+
+// more detail type of object
+Object.realType(null) // => 'null'
+Object.realType(new Date) // => 'date'
+Object.realType([]) // => 'array'
+
+// methods of object
+Object.methods(obj);
+
+// own properties
+Object.properties(obj) // -> return own properties
+
+// all properties of object
+Object.allProperties(obj) // -> return all properties of object
+
+// variables
+Object.instance_variables(obj)
+
+// array of instance variable names
+Object.instance_variable_names(obj)
+
+// same as ruby's ancestors
+Object.ancestors(obj) // return array of inherited prototypes
+
+// check if object is constructor
+Object.isConstructor(obj);
+
+```
+
 Ruby like classes for Node.js
 
 ### Api example
@@ -52,7 +108,7 @@ console.log('klassName', aCat.klassName);
 console.log('instance_variables', aCat.instance_variables);
 console.log('object_id', aCat.object_id);
 console.log('object_id', (new Cat).object_id);
-console.log('ancesstors', Cat.ancesstors);
+console.log('ancestors', Cat.ancestors);
 console.log('parentKlass', Cat.parentKlass);
 console.log('klass', aCat.klass);
 console.log('Class.klass', Cat.klass);

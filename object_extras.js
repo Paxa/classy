@@ -1,30 +1,63 @@
-Object.forEach = function Object_forEach (object, callback) {
+var ObjectKit = {};
+
+var isPrototype = function isPrototype (obj) {
+  return typeof obj == 'function' && Object.keys(obj.prototype).length > 0;
+};
+
+ObjectKit.forEach = function Object_forEach (object, callback) {
   for (var key in object) {
     if (object.hasOwnProperty(key)) callback(key, object[key]);
   }
 };
 
 
-Object.methods = function Object_methods (object) {
+ObjectKit.values = function Object_values (object) {
+  var values = [];
+  Object.forEach(object, function(key, value) { values.push(value); });
+  return values;
+};
+
+
+// standart types + array, null, class, date, regexp
+// standarts are: undefined, object, boolean, number, string, function
+ObjectKit.realType = function Object_realType (object) {
+  if (typeof object == 'object') {
+    if (object instanceof Date)        return 'date';
+    if (object instanceof RegExp)      return 'regexp';
+    if (ObjectKit.isPrototype(object)) return 'class';
+    if (Array.isArray(object))         return 'array';
+    if (object === null)               return 'null';
+  }
+
+  return typeof object;
+};
+
+
+ObjectKit.methods = function Object_methods (object) {
   var methods = [];
   for (var prop in object) {
-    if (typeof object[prop] == 'function') methods.push(prop);
+    if (typeof object[prop] == 'function' && !isPrototype(object[prop])) methods.push(prop);
   }
   return methods;
 };
 
 
-Object.own_methods = function Object_own_methods (object) {
+ObjectKit.own_methods = function Object_own_methods (object) {
   var methods = [];
   for (var prop in object) {
-    if (object.hasOwnProperty(prop) && typeof object[prop] == 'function') methods.push(prop);
+    if (object.hasOwnProperty(prop) && typeof object[prop] == 'function' && !isPrototype(object[prop])) methods.push(prop);
   }
   return methods;
 };
 
 
-Object.properties = function Object_properties (object) {
-  var properties = Object.getOwnPropertyNames(object);
+ObjectKit.properties = function Object_properties (object) {
+  var properties;
+  if (typeof object == 'object') {
+    properties = Object.getOwnPropertyNames(object);
+  } else {
+    properties = Object.getOwnPropertyNames(Object.getPrototypeOf(object));
+  }
   var proto = object.constructor.prototype;
 
   Object.getOwnPropertyNames(proto).forEach(function(key) {
@@ -40,7 +73,7 @@ Object.properties = function Object_properties (object) {
   return filtered;
 };
 
-Object.allProperties = function(object) {
+ObjectKit.allProperties = function(object) {
   var props = [];
 
   do {
@@ -52,19 +85,40 @@ Object.allProperties = function(object) {
   return props;
 };
 
-Object.instance_variables = function Object_instance_variables (object) {
+ObjectKit.instance_variables = function Object_instance_variables (object) {
   var ivars = {};
   for (var i in object) {
-    if (typeof object[i] != 'function') ivars[i] = object[i];
+    if (typeof object[i] != 'function' || isPrototype(object[i])) ivars[i] = object[i];
   }
   return ivars;
 };
 
-
-Object.instance_variable_names = function Object_instance_variable_names (object) {
+ObjectKit.instance_variable_names = function Object_instance_variable_names (object) {
   var keys = [];
   for (var i in object) {
-    if (typeof object[i] != 'function') keys.push(i);
+    if (typeof object[i] != 'function' || isPrototype(object[i])) keys.push(i);
   }
   return keys;
-}
+};
+
+ObjectKit.ancestors = function Object_ancestors (object) {
+  var lsat = object;
+  prototypes = [];
+
+  while (last = Object.getPrototypeOf(last)) {
+    prototypes.push(last);
+  }
+
+  return prototypes;
+};
+
+ObjectKit.isPrototype = isPrototype;
+ObjectKit.isConstructor = ObjectKit.isPrototype;
+
+ObjectKit.extendGlobal = function () {
+  ObjectKit.forEach(ObjectKit, function (key, value) {
+    if (key != 'extendGlobal') Object[key] = value;
+  });
+};
+
+module.exports = ObjectKit;
