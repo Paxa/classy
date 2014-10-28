@@ -10,6 +10,26 @@ var puts = function (str, color) {
   }
 };
 
+var jsonCensor = function censor(censor) {
+  var i = 0;
+
+  return function (key, value) {
+    if (i !== 0 && typeof(censor) === 'object' && typeof(value) == 'object' && censor == value) {
+      return '[Circular]';
+    }
+
+    if (i >= 29) {// seems to be a harded maximum of 30 serialized objects?
+      return '[Unknown]';
+    }
+
+    ++i; // so we know we aren't using the original object anymore
+
+    return value;
+  }
+};
+
+var skipableClasses = ['ReadStream', 'WriteStream'];
+
 var debugValue = function debugValue (object) {
   var type = ObjectKit.realType(object);
 
@@ -23,8 +43,11 @@ var debugValue = function debugValue (object) {
     case 'number':    return object.toString();
     case 'string':    return object.toString();
     case 'function':  return "function '" + object.name + "'";
-    case 'array':     return JSON.stringify(object);
+    case 'array':
+      return JSON.stringify(object, jsonCensor);
+      break;
     case 'object':
+      if (skipableClasses.indexOf(object.constructor.name) != -1) return "**WriteStream**";
       if (typeof object.inspect == 'function') return object.inspect();
       var values = [];
       ObjectKit.forEach(object, function(obj_k, obj_v) {
@@ -38,17 +61,28 @@ var debugValue = function debugValue (object) {
   return object.toString();
 };
 
-Object.ls = function Object_ls (object) {
+Object.ls = function Object_ls (object, dump_vars) {
+  if (dump_vars === undefined) dump_vars = true;
+  if (skipableClasses.indexOf(object.constructor.name) != -1) {
+    puts("* variable values will not be shown");
+    dump_vars = false;
+  }
+
   puts('-> instance of ' + String(object.constructor.name).bold);
 
   puts("  variables:");
   ObjectKit.instance_variable_names(object).forEach(function(key) {
-    var value = debugValue(object[key]);
-    puts("  * " + key + " = " + value, 'green');
+    if (dump_vars) {
+      var value = debugValue(object[key]);
+      puts("  * " + key + " = " + value, 'green');
+    } else {
+      puts("  * " + key, 'green');
+    }
   });
 
   puts("  properties:");
-  ObjectKit.properties(object).forEach(function(key) {
+  ObjectKit.own_properties(object).forEach(function(key) {
+    var prop = Object.getOwnPropertyDescriptor(object, key);
     puts("  @ " + key, 'cyan');
   });
 
@@ -59,14 +93,18 @@ Object.ls = function Object_ls (object) {
 
   puts("  inherited:");
 
-  var proto = Object.getPrototypeOf(object);
+  if (typeof object == 'object') {
+    var proto = Object.getPrototypeOf(object);
+  } else {
+    var proto = object.constructor && object.constructor.prototype;
+  }
 
   while (proto) {
     puts('  -> from ' + String(proto.constructor ? proto.constructor.name : proto.name).bold);
     ObjectKit.own_methods(proto).forEach(function(key) {
       puts("    * " + key, 'green');
     });
-    ObjectKit.properties(proto).forEach(function(key) {
+    ObjectKit.own_properties(proto).forEach(function(key) {
       puts("    @ " + key, 'cyan');
     });
     proto = Object.getPrototypeOf(proto);
@@ -125,3 +163,6 @@ SubProduct.prototype.isSubProduct = function () { };
 
 Object.ls(new SubProduct);
 */
+
+//Object.ls(process);
+//Object.ls(new Date);

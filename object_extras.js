@@ -1,7 +1,7 @@
 var ObjectKit = {};
 
 var isPrototype = function isPrototype (obj) {
-  return typeof obj == 'function' && Object.keys(obj.prototype).length > 0;
+  return typeof obj == 'function' && obj.prototype && Object.keys(obj.prototype).length > 0;
 };
 
 ObjectKit.forEach = function Object_forEach (object, callback) {
@@ -32,22 +32,70 @@ ObjectKit.realType = function Object_realType (object) {
   return typeof object;
 };
 
-
 ObjectKit.methods = function Object_methods (object) {
-  var methods = [];
-  for (var prop in object) {
-    if (typeof object[prop] == 'function' && !isPrototype(object[prop])) methods.push(prop);
-  }
+  var methods = ObjectKit.own_methods(object);
+
+  ObjectKit.ancestors(object).forEach(function (proto) {
+    ObjectKit.own_methods(proto).forEach(function(methodName) {
+      if (methods.indexOf(methodName) == -1) methods.push(methodName);
+    })
+  });
+
   return methods;
 };
 
 
 ObjectKit.own_methods = function Object_own_methods (object) {
   var methods = [];
+
+  if (typeof object == 'object') {
+    Object.getOwnPropertyNames(object).forEach(function (key) {
+      if (key == 'constructor') return;
+      var prop = Object.getOwnPropertyDescriptor(object, key);
+      if (!('value' in prop) || !prop.enumerable) {
+        if (typeof prop.value == 'function' && !isPrototype(prop.value)) {
+          methods.push(key);
+        }
+      }
+    });
+  }
+
   for (var prop in object) {
-    if (object.hasOwnProperty(prop) && typeof object[prop] == 'function' && !isPrototype(object[prop])) methods.push(prop);
+    try {
+      if (object.hasOwnProperty(prop) && typeof object[prop] == 'function' && !isPrototype(object[prop])) {
+        methods.push(prop);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
   return methods;
+};
+
+
+ObjectKit.own_properties = function Object_own_properties (object) {
+  var properties;
+  if (typeof object == 'object') {
+    properties = Object.getOwnPropertyNames(object);
+  } else {
+    return [];
+  }
+
+  var filtered = [];
+  properties.forEach(function(key) {
+    if (key == 'constructor') {
+      filtered.push(key);
+      return;
+    }
+    var prop = Object.getOwnPropertyDescriptor(object, key);
+    if (!('value' in prop) || !prop.enumerable) {
+      if (typeof prop.value != 'function' || isPrototype(prop.value)) {
+        filtered.push(key);
+      }
+    }
+  });
+
+  return filtered;
 };
 
 
@@ -56,7 +104,7 @@ ObjectKit.properties = function Object_properties (object) {
   if (typeof object == 'object') {
     properties = Object.getOwnPropertyNames(object);
   } else {
-    properties = Object.getOwnPropertyNames(Object.getPrototypeOf(object));
+    return [];
   }
   var proto = object.constructor.prototype;
 
@@ -67,7 +115,9 @@ ObjectKit.properties = function Object_properties (object) {
   var filtered = [];
   properties.forEach(function(key) {
     var prop = Object.getOwnPropertyDescriptor(object, key) || Object.getOwnPropertyDescriptor(proto, key);
-    if (!('value' in prop) || !prop.enumerable) filtered.push(key);
+    if (!('value' in prop) || !prop.enumerable) {
+      filtered.push(key);
+    }
   });
 
   return filtered;
@@ -102,7 +152,7 @@ ObjectKit.instance_variable_names = function Object_instance_variable_names (obj
 };
 
 ObjectKit.ancestors = function Object_ancestors (object) {
-  var lsat = object;
+  var last = object;
   prototypes = [];
 
   while (last = Object.getPrototypeOf(last)) {

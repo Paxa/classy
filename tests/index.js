@@ -17,6 +17,7 @@ process.on("uncaughtException", function(err) {
 
 /// Load testable
 global.Classy = require("../classy");
+require("../object_ls");
 
 /// Load tests
 
