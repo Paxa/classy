@@ -164,5 +164,5 @@ SubProduct.prototype.isSubProduct = function () { };
 Object.ls(new SubProduct);
 */
 
-//Object.ls(process);
+//Object.ls(console);
 //Object.ls(new Date);

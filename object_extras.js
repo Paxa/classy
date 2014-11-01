@@ -1,6 +1,42 @@
 var ObjectKit = {};
 
 var isPrototype = function isPrototype (obj) {
+  var standartClasses = [
+    Object,
+    Function,
+    Boolean,
+    Error,
+    EvalError,
+    //InternalError,
+    RangeError,
+    ReferenceError,
+    SyntaxError,
+    TypeError,
+    URIError,
+    Number,
+    Math,
+    Date,
+    String,
+    RegExp,
+    Array,
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    ArrayBuffer,
+    DataView,
+    JSON
+  ];
+
+  if (typeof obj == 'function' && obj.prototype) {
+    if (standartClasses.indexOf(obj) != -1) return true;
+  }
+
   return typeof obj == 'function' && obj.prototype && Object.keys(obj.prototype).length > 0;
 };
 
@@ -13,7 +49,7 @@ ObjectKit.forEach = function Object_forEach (object, callback) {
 
 ObjectKit.values = function Object_values (object) {
   var values = [];
-  Object.forEach(object, function(key, value) { values.push(value); });
+  ObjectKit.forEach(object, function(key, value) { values.push(value); });
   return values;
 };
 
@@ -21,10 +57,11 @@ ObjectKit.values = function Object_values (object) {
 // standart types + array, null, class, date, regexp
 // standarts are: undefined, object, boolean, number, string, function
 ObjectKit.realType = function Object_realType (object) {
+  if (ObjectKit.isPrototype(object)) return 'class';
+
   if (typeof object == 'object') {
     if (object instanceof Date)        return 'date';
     if (object instanceof RegExp)      return 'regexp';
-    if (ObjectKit.isPrototype(object)) return 'class';
     if (Array.isArray(object))         return 'array';
     if (object === null)               return 'null';
   }
@@ -35,8 +72,8 @@ ObjectKit.realType = function Object_realType (object) {
 ObjectKit.methods = function Object_methods (object) {
   var methods = ObjectKit.own_methods(object);
 
-  ObjectKit.ancestors(object).forEach(function (proto) {
-    ObjectKit.own_methods(proto).forEach(function(methodName) {
+  ObjectKit.ancestors(object).forEach(function (klass) {
+    ObjectKit.own_methods(klass.prototype).forEach(function(methodName) {
       if (methods.indexOf(methodName) == -1) methods.push(methodName);
     })
   });
@@ -48,7 +85,7 @@ ObjectKit.methods = function Object_methods (object) {
 ObjectKit.own_methods = function Object_own_methods (object) {
   var methods = [];
 
-  if (typeof object == 'object') {
+  if (typeof object == 'object' || typeof object == 'function') {
     Object.getOwnPropertyNames(object).forEach(function (key) {
       if (key == 'constructor') return;
       var prop = Object.getOwnPropertyDescriptor(object, key);
@@ -75,13 +112,14 @@ ObjectKit.own_methods = function Object_own_methods (object) {
 
 ObjectKit.own_properties = function Object_own_properties (object) {
   var properties;
-  if (typeof object == 'object') {
+  if (typeof object == 'object' && object != null || typeof object == 'function') {
     properties = Object.getOwnPropertyNames(object);
   } else {
     return [];
   }
 
   var filtered = [];
+
   properties.forEach(function(key) {
     if (key == 'constructor') {
       filtered.push(key);
@@ -100,22 +138,29 @@ ObjectKit.own_properties = function Object_own_properties (object) {
 
 
 ObjectKit.properties = function Object_properties (object) {
+  var properties = ObjectKit.own_properties(object);
+
+  ObjectKit.ancestors(object).forEach(function (klass) {
+    ObjectKit.own_properties(klass.prototype).forEach(function(methodName) {
+      if (properties.indexOf(methodName) == -1) properties.push(methodName);
+    })
+  });
+
+  return properties;
+};
+
+ObjectKit.dynamicProperties = function(object) {
   var properties;
-  if (typeof object == 'object') {
+  if (typeof object == 'object' && object != null || typeof object == 'function') {
     properties = Object.getOwnPropertyNames(object);
   } else {
     return [];
   }
-  var proto = object.constructor.prototype;
-
-  Object.getOwnPropertyNames(proto).forEach(function(key) {
-    if (properties.indexOf(key) == -1) properties.push(key);
-  });
 
   var filtered = [];
   properties.forEach(function(key) {
-    var prop = Object.getOwnPropertyDescriptor(object, key) || Object.getOwnPropertyDescriptor(proto, key);
-    if (!('value' in prop) || !prop.enumerable) {
+    var prop = Object.getOwnPropertyDescriptor(object, key);
+    if (!('value' in prop) && ('get' in prop)) {
       filtered.push(key);
     }
   });
@@ -152,11 +197,30 @@ ObjectKit.instance_variable_names = function Object_instance_variable_names (obj
 };
 
 ObjectKit.ancestors = function Object_ancestors (object) {
-  var last = object;
   prototypes = [];
 
+  if (typeof object == 'number') {
+    object = Number.prototype;
+    prototypes.push(Number);
+  }
+
+  if (typeof object == 'string') {
+    object = String.prototype;
+    prototypes.push(String);
+  }
+
+  if (typeof object == 'boolean') {
+    object = Boolean.prototype;
+    prototypes.push(Boolean);
+  }
+
+  if (typeof object == 'undefined' || (typeof object == 'object' && object == null)) {
+    return [];
+  }
+
+  var last = object;
   while (last = Object.getPrototypeOf(last)) {
-    prototypes.push(last);
+    prototypes.push(last.constructor);
   }
 
   return prototypes;
